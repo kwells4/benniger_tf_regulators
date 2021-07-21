@@ -1,0 +1,121 @@
+
+# These rules will create fasta files that can be loaded into this website 
+# https://www.genome.jp/tools-bin/mafft to generate alignments
+
+rule gene_fasta:
+    output: 
+        "{results}/conservation_{gene_list}/{distance}_test/{gene}_species_promoter_fasta.fa"
+    params:
+        job_name     = "generate_fa",
+        memory       = "select[mem>4] rusage[mem=4]",
+        genes        = GENES,
+        main_species = SPECIES,
+        species_list = OTHER_SPECIES,
+        output_dir   = "{results}/conservation_{gene_list}/{distance}_test/"
+    log:
+        "{results}/logs/conservation_{gene_list}_{distance}/{gene}_promoter_fasta.log"
+    run:
+        ortholog_file = params.output_dir + "orthologs"
+        command = ("curl 'https://rest.ensembl.org/homology/id/" +
+            wildcards.gene +
+            "?type=orthologues;format=condensed' -H 'Content-type:text/xml'")
+        print(command)
+        # Download ortholog file
+        shell(
+            """
+            {command} > {ortholog_file}
+            """
+            )
+        for i in params.species_list:
+            species_bed = params.species_list[i]["bed"]
+            species_genome = params.species_list[i]["chr_size"]
+            species_fasta = params.species_list[i]["fasta"]
+            species_subset = (params.output_dir + i + "_" + wildcards.gene +
+                "_gene_subset.bed")
+            species_upstream_file = (params.output_dir + i + "_" + wildcards.gene
+                + "_upstream.bed")
+            species_downstream_file = (params.output_dir + i + "_" +
+                wildcards.gene + "_downstream.bed")
+            species_final_file = (params.output_dir + i + "_" +
+                wildcards.gene + "_final.bed")
+            species_gene_fasta = (params.output_dir + i + "_" +
+                wildcards.gene + "_gene_fasta.fa")
+            up_distance,down_distance = wildcards.distance.split("_")
+
+            species_awk = '"' + i + '"'
+
+            if i == params.main_species:
+                shell(
+                    """
+                    # Subset the bed file to only the species of interest
+                    grep {wildcards.gene} {species_bed} > {species_subset}
+                    """
+                    )
+            else:
+                shell(
+                    """
+                    # Locate the gene name for the sepcific species
+                    ensid=$(grep {i} {ortholog_file} | awk '{{print $2}}')
+                    ensid="${{ensid:3}}"
+
+                    # Subset the bed file to only the species of interest
+                    grep $ensid {species_bed} > {species_subset}
+                    """
+                    )
+            shell(
+                """
+                # Next change the file based on upstream of the tss
+                bedtools flank \
+                -i {species_subset} \
+                -g {species_genome} \
+                -l {up_distance} -r 0 -s > {species_upstream_file}
+
+                # Change the file based on downstream of the tss
+                bedtools slop \
+                -i {species_upstream_file} \
+                -g {species_genome} \
+                -l 0 -r {down_distance} -s > {species_downstream_file}
+
+                # Change name column to species
+                sep='"\\t"'
+                awk -F $sep '{{OFS=FS}}{{$4={species_awk} ; print}}' \
+                {species_downstream_file} > {species_final_file}
+
+                # Create Fasta file
+                bedtools getfasta -name \
+                -fi {species_fasta} \
+                -bed {species_final_file} \
+                -fo {species_gene_fasta}
+
+                # rm {species_subset}
+                # rm {species_upstream_file}
+                # rm {species_downstream_file}
+                # rm {species_final_file}
+                """
+                )
+
+        # Concatanate all files
+        cat_command = " ".join([params.output_dir + i + "_" + wildcards.gene +
+            "_gene_fasta.fa" for i in params.species_list])
+
+        shell(
+            """
+            cat {cat_command} > {output}
+            """
+            )
+
+
+rule run_mafft:
+    input:
+        "{results}/conservation_{gene_list}/{distance}_test/{gene}_species_promoter_fasta.fa"
+    output:
+        "{results}/conservation_{gene_list}/{distance}_test/{gene}_alignment_fasta.fa"
+    params:
+        job_name = "generate_fa",
+        memory   = "select[mem>4] rusage[mem=4]"
+    log:
+        "{results}/logs/conservation_{gene_list}_{distance}/{gene}_alignment_fasta.log"
+    shell:
+        """
+        mafft {input} > {output}
+        """

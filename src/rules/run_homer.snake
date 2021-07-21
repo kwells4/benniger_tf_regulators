@@ -1,0 +1,59 @@
+# These rules will run homer
+
+rule run_homer:
+    output: 
+        dir  = directory("{results}/homer_{gene_list}/{distance}_test/"),
+        html = "{results}/homer_{gene_list}/{distance}_test/knownResults.txt"
+    params:
+        job_name  = "run_homer",
+        memory    = "select[mem>4] rusage[mem=4]",
+        genes     = GENES,
+        species_v = SPECIES
+    log:
+        "{results}/logs/homer_{gene_list}_{distance}/run_homer.log"
+    run:
+        up_distance,down_distance = wildcards.distance.split("_")
+        up_distance = "-" + up_distance
+        subset_genes = GENES[wildcards.gene_list]
+        if params.species_v == "mm9" or params.species_v == "mm10":
+            species = "mouse"
+        elif params.species_v == "hg19" or params.species_v == "hg38":
+            species = "human"
+        shell(
+        	"""
+            # Run homer
+        	findMotifs.pl {subset_genes} \
+        	{species} \
+        	{output.dir} \
+        	-start {up_distance} \
+        	-end {down_distance}
+        	"""
+        	)
+
+# This can be used to identify the sites of the motifs, but it's not clear to me
+# How to figure out what motifs are being used.
+# rule homer_sites:
+#     input:
+#     	"{results}/homer_{gene_list}/{distance}_test/homerMotifs.all.motifs"
+#     output:
+#         "{results}/homer_{gene_list}/{distance}_test/motif_locations.tsv"
+#     params:
+#         job_name = "homer_sites",
+#         memory   = "select[mem>8], rusage[mem=8]",
+#         species  = SPECIES,
+#         genes    = GENES
+#     log:
+#         "{results}/logs/homer_{gene_list}_{distance}/run_homer.log"
+#     run:
+#         up_distance,down_distance = wildcards.distance.split("_")
+#         use_distance = "-" + up_distance + "," + down_distance
+#         subset_genes = GENES[wildcards.gene_list]
+#         shell(
+#         	"""
+#         	annotatePeaks.pl tss \
+#         	{params.species} \
+#         	-size {use_distance} \
+#         	-m {input} \
+#         	-list {subset_genes} > {output}
+#         	"""
+#         	)

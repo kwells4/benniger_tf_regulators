@@ -1,0 +1,37 @@
+# This is the config file to run TF binding site analysis with Homer and Meme
+
+# Path to results directory
+RESULTS:
+  "results/nfat_targets_nfat_tfs"
+
+# Path to the reference and bed file
+BED_FILE:
+  "/beevol/home/wellskri/Analysis/ref/annotation/mouse/GRCm38/bed/Mus_musculus.GRCm38.96.bed"
+
+# Path to genome fa
+FASTA_FILE:
+  "/beevol/home/wellskri/Analysis/ref/genome/mouse/GRCm38/Mus_musculus.GRCm38.dna.primary_assembly.fa"
+
+# Chromosome sizes, path to file of chromosome sizes
+CHR_SIZE:
+  "/beevol/home/rbilab/ref/indices/star/mouse/GRCm38/chrNameLength.txt"
+
+# Path to MEME formatted motifs. Can be downloaded from jaspar http://jaspar.genereg.net/downloads/
+MOTIFS:
+  "files/nfat_vertibrate_motifs_jaspar.txt"
+
+# The species you want to analyze
+SPECIES:
+  "mm10"
+
+# Distances from promoter. Can give several, first number is up second is down. Separate
+# numbers by an underscore
+DISTANCES:
+  - "300_50"
+  - "2000_0"
+  - "2000_2000"
+
+# Path to file containing gene list. Can provide multiple
+GENES:
+  NFAT_LIST:
+    - "files/nfat_list.txt"

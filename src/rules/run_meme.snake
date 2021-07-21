@@ -1,0 +1,97 @@
+
+# These rules will create bed files necessary to run the meme tools and run fimo
+
+rule generate_bed:
+    output: "{results}/meme_{gene_list}/{distance}_test/subset_promoter_bed.bed"
+    params:
+        job_name = "generate_bed",
+        memory   = "select[mem>4] rusage[mem=4]",
+        genes    = GENES,
+        bed_file = BED_FILE,
+        output_dir = "{results}/meme_{gene_list}/{distance}_test/",
+        genome = CHR_SIZE
+    log:
+        "{results}/logs/meme_{gene_list}_{distance}/subset_promoter_bed.log"
+    run:
+        up_distance,down_distance = wildcards.distance.split("_")
+        subset_genes = GENES[wildcards.gene_list]
+        subset_file = params.output_dir + "subset_bed.bed"
+        upstream_file = params.output_dir + "upsteam.bed"
+        shell(
+        	"""
+        	# First subset to only genes of interest
+        	grep -f {subset_genes} {params.bed_file} > {subset_file}
+
+        	# Next change the file based on upstream of the tss
+        	bedtools flank \
+        	-i {subset_file} \
+        	-g {params.genome} \
+        	-l {up_distance} -r 0 -s > {upstream_file}
+
+        	# Finally change the file based on downstream of the tss
+        	bedtools slop \
+        	-i {upstream_file} \
+        	-g {params.genome} \
+        	-l 0 -r {down_distance} -s > {output}
+
+        	rm {subset_file}
+        	rm {upstream_file}
+        	"""
+        	)
+
+rule create_fa:
+    input:
+        "{results}/meme_{gene_list}/{distance}_test/subset_promoter_bed.bed"
+    output:
+        "{results}/meme_{gene_list}/{distance}_test/subset_promoter.fa"
+    params:
+        job_name = "generate_fa",
+        memory   = "select[mem>4] rusage[mem=4]",
+        fa_file = FASTA_FILE
+    log:
+        "{results}/logs/meme_{gene_list}_{distance}/subset_promoter_fa.log"
+    shell:
+        """
+        bedtools getfasta -name \
+        -fi {params.fa_file} \
+        -bed {input} \
+        -fo {output}
+        """
+
+rule background_sequences:
+    input:
+        "{results}/meme_{gene_list}/{distance}_test/subset_promoter.fa"
+    output:
+        "{results}/meme_{gene_list}/{distance}_test/background_sequences.txt"
+    log:
+        "{results}/logs/meme_{gene_list}_{distance}/background_sequences.log"
+    params:
+        job_name = "create_background",
+        memory = "select[mem>4] rusage[mem=4]"
+    shell:
+        """
+        fasta-get-markov \
+        {input} \
+        {output}
+        """
+
+rule run_fimo:
+    input:
+        fasta = "{results}/meme_{gene_list}/{distance}_test/subset_promoter.fa",
+        background = "{results}/meme_{gene_list}/{distance}_test/background_sequences.txt"
+    output:
+        directory("{results}/meme_{gene_list}/{distance}_test/fimo_out/")
+    log:
+        "{results}/logs/meme_{gene_list}_{distance}/run_fimo.log"
+    params:
+        job_name = "run_fimo",
+        memory = "select[mem>4] rusage[mem=4]",
+        motif_file = MOTIFS
+    shell:
+        """
+		fimo \
+		--bfile {input.background} \
+		--o {output} \
+		{params.motif_file} \
+		{input.fasta}
+        """
