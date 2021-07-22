@@ -13,12 +13,12 @@ mkdir -p logs
 module load meme
 module load bedtools
 
-config_file=src/configs/ca_targets_all_tfs_human.yaml
+#config_file=src/configs/ca_targets_all_tfs_human.yaml
 #config_file=src/configs/ca_targets_all_tfs_mouse.yaml
 #config_file=src/configs/ca_targets_ca_tfs_human.yaml
 #config_file=src/configs/ca_targets_ca_tfs_mouse.yaml
 #config_file=src/configs/nfat_targets_all_tfs.yaml
-#config_file=src/configs/nfat_targets_nfat_tfs.yaml
+config_file=src/configs/nfat_targets_nfat_tfs.yaml
 
 # Function to run snakemake
 run_snakemake() {

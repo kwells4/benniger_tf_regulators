@@ -13,18 +13,18 @@ DISTANCES = config["DISTANCES"]
 CHR_SIZE = config["CHR_SIZE"]
 MOTIFS = config["MOTIFS"]
 SPECIES = config["SPECIES"]
-OTHER_SPECIES = config["OTHER_SPECIES"]
+# OTHER_SPECIES = config["OTHER_SPECIES"]
 
-OTHER_SPECIES[SPECIES] = {"bed":BED_FILE, "fasta":FASTA_FILE, "chr_size":CHR_SIZE}
+# OTHER_SPECIES[SPECIES] = {"bed":BED_FILE, "fasta":FASTA_FILE, "chr_size":CHR_SIZE}
 
-bed_file = OTHER_SPECIES["hg38"]["bed"]
+# bed_file = OTHER_SPECIES["hg38"]["bed"]
 
-# Create gene list
-GENE_LIST = []
-for gene_set in GENES:
-    with open(GENES[gene_set][0], "r") as gene_file:
-        for line in gene_file:
-            GENE_LIST.append(line.strip())
+# # Create gene list
+# GENE_LIST = []
+# for gene_set in GENES:
+#     with open(GENES[gene_set][0], "r") as gene_file:
+#         for line in gene_file:
+#             GENE_LIST.append(line.strip())
 
 rule all:
     input: 
@@ -41,15 +41,15 @@ rule all:
             "{results}/homer_{gene_list}/{distance}_test/",
             results = RESULTS, gene_list = GENES, distance = DISTANCES
             ),
-        expand(
-            "{results}/conservation_{gene_list}/{distance}_test/{gene}_species_promoter_fasta.fa",
-            results = RESULTS, gene_list = GENES, distance = DISTANCES, gene = GENE_LIST
-            ),
-        expand(
-            "{results}/conservation_{gene_list}/{distance}_test/{gene}_alignment_fasta.fa",
-            results = RESULTS, gene_list = GENES, distance = DISTANCES, gene = GENE_LIST
-            )
+        # expand(
+        #     "{results}/conservation_{gene_list}/{distance}_test/{gene}_species_promoter_fasta.fa",
+        #     results = RESULTS, gene_list = GENES, distance = DISTANCES, gene = GENE_LIST
+        #     ),
+        # expand(
+        #     "{results}/conservation_{gene_list}/{distance}_test/{gene}_alignment_fasta.fa",
+        #     results = RESULTS, gene_list = GENES, distance = DISTANCES, gene = GENE_LIST
+        #     )
 
 include: "src/rules/run_meme.snake"
 include: "src/rules/run_homer.snake"
-include: "src/rules/generate_fastas.snake"
+# include: "src/rules/generate_fastas.snake"
