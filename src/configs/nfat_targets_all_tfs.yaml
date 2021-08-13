@@ -30,6 +30,7 @@ DISTANCES:
   - "300_50"
   - "2000_0"
   - "2000_2000"
+  - "5000_5000"
 
 # Path to file containing gene list. Can provide multiple
 GENES:

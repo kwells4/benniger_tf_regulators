@@ -2,7 +2,7 @@
 
 # Path to results directory
 RESULTS:
-  "results/nfat_targets_nfat_tfs"
+  "results/nfat_gd_gfk_targets_all_tfs"
 
 # Path to the reference and bed file
 BED_FILE:
@@ -35,4 +35,4 @@ DISTANCES:
 # Path to file containing gene list. Can provide multiple
 GENES:
   NFAT_LIST:
-    - "files/nfat_list.txt"
+    - "files/nfat_list_gd_gfk.txt"
