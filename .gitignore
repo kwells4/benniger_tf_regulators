@@ -8,3 +8,4 @@ logs/*
 give_results/*
 figures/*
 files/*.bed
+files/*.pdf
