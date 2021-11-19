@@ -6,3 +6,6 @@ results/*
 logs/*
 .Rproj.user
 give_results/*
+figures/*
+files/*.bed
+files/*.pdf

@@ -1,4 +1,6 @@
 library(tidyverse)
+library(biomaRt)
+
 working_dir <- 
   "/Users/wellskr/Documents/Analysis/Richard_Benniger/benniger_tf_regulators/results/"
 
@@ -11,8 +13,9 @@ conservation_dir <- "UCSC_phast"
 conservation_path <- paste0(working_dir, gene_list, "/",
                             conservation_dir)
 
-distances <- c("300_50_test", "2000_2000_test", "2000_0_test")
+distances <- c("300_50_test", "2000_2000_test", "2000_0_test", "5000_5000_test")
 
+# Don't have conservation information here
 skip_genes <- c("ENSMUSG00000005232", "ENSMUSG00000050931")
 
 # Functions --------------------------------------------------------------------
@@ -62,6 +65,19 @@ invisible(lapply(distances, function(x){
     dplyr::mutate(motif_start = as.numeric(region_start) + start,
                   motif_end = as.numeric(region_start) + stop)
   
+  # Add gene ids
+  mart <- useDataset("mmusculus_gene_ensembl", useMart("ensembl"))
+  genes <- unique(fimo_res$gene_id)
+  G_list <- getBM(filters = "ensembl_gene_id",
+                  attributes = c("ensembl_gene_id", "external_gene_name"),
+                  values = genes, mart = mart)
+  
+  gene_names <- G_list$external_gene_name
+  names(gene_names) <- G_list$ensembl_gene_id
+  
+  fimo_res$gene_name <- gene_names[fimo_res$gene_id]
+  
+  # Add no conservation score for these
   fimo_res_remove <- fimo_res %>%
     dplyr::filter(gene_id %in% skip_genes) %>%
     mutate(average_conservation = "NA",

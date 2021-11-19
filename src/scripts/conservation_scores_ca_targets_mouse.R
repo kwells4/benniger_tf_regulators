@@ -1,4 +1,6 @@
 library(tidyverse)
+library(biomaRt)
+
 working_dir <- 
   "/Users/wellskr/Documents/Analysis/Richard_Benniger/benniger_tf_regulators/results/"
 
@@ -11,7 +13,7 @@ conservation_dir <- "UCSC_phast"
 conservation_path <- paste0(working_dir, gene_list, "/",
                             conservation_dir)
 
-distances <- c("300_50_test", "2000_2000_test", "2000_0_test")
+distances <- c("300_50_test", "2000_2000_test", "2000_0_test", "5000_5000_test")
 
 # Functions --------------------------------------------------------------------
 get_conservation <- function(fimo_row, conservation_path,
@@ -39,6 +41,7 @@ get_conservation <- function(fimo_row, conservation_path,
 # Read in data -----------------------------------------------------------------
 
 invisible(lapply(distances, function(x){
+  print(x)
   fimo_path <- paste0(x, "/fimo_out/")
   
   fimo_file <- "fimo.tsv"
@@ -57,6 +60,18 @@ invisible(lapply(distances, function(x){
                   region_end = sub(".*-", "", sequence_name)) %>%
     dplyr::mutate(motif_start = as.numeric(region_start) + start,
                   motif_end = as.numeric(region_start) + stop)
+  
+  # Add gene ids
+  mart <- useDataset("mmusculus_gene_ensembl", useMart("ensembl"))
+  genes <- unique(fimo_res$gene_id)
+  G_list <- getBM(filters = "ensembl_gene_id",
+                  attributes = c("ensembl_gene_id", "external_gene_name"),
+                  values = genes, mart = mart)
+  
+  gene_names <- G_list$external_gene_name
+  names(gene_names) <- G_list$ensembl_gene_id
+  
+  fimo_res$gene_name <- gene_names[fimo_res$gene_id]
   
   # Determine conservation scores and add them to the fimo output
   conservation_scores <- lapply(1:nrow(fimo_res), function(x){
