@@ -22,7 +22,8 @@ module load bedtools
 #config_file=src/configs/nfat_gd_gfk_targets_all_tfs.yaml
 #config_file=src/configs/nfat_gd_gfk_targets_nfat_tfs.yaml
 #config_file=src/configs/nfat_g_gd_targets_all_tfs.yaml
-config_file=src/configs/nfat_g_gd_targets_nfat_tfs.yaml
+#config_file=src/configs/nfat_g_gd_targets_nfat_tfs.yaml
+config_file=src/configs/nfat_targets_ca_tfs.yaml
 
 # Function to run snakemake
 run_snakemake() {
