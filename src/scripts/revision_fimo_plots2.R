@@ -18,7 +18,7 @@ conservation_path <- paste0(working_dir, gene_list, "/",
                             conservation_dir)
 
 # Distances to plot
-distance <- "5000_5000_test"
+distance <- "300_50_test"
 
 # genes to plot
 plot_list <- c("Npas4", "Fos", "Nr4a1", "Nr4a2") # NFAT binding
@@ -30,6 +30,14 @@ tf_list <- c("Creb"   = "CREB|Creb",
              "Fosb"   = "FOSB",
              "Npas2"  = "Npas2",
              "Nfkb1"  = "NFKB1")
+
+#tf_list <- c("Creb"   = "CREB5",
+#             "Mef"    = "MEF",
+#             "Neruod" = "NEUROD1",
+#             "Nfat"   = "NFAT5",
+#             "Fosb"   = "FOSB",
+#             "Npas2"  = "Npas2",
+#             "Nfkb1"  = "NFKB1")
 
 tf_range <- list("Creb"   = c(7, 19),
                  "Mef"    = c(4, 21),
@@ -55,25 +63,26 @@ fimo_res <- read.table(file.path(working_dir, gene_list, meme_dir,
                                  fimo_path, fimo_file), sep = "\t",
                        header = TRUE)
 
-fimo_res$motif_pos = fimo_res$start - 5000
-
 g_gd_list <- read.table(file.path(getwd(), "files/nfat_list_g_gd.txt"))
 
 fimo_short <- fimo_res %>%
-  dplyr::filter(abs(motif_pos) < 2000 & p.value < 1e-5 &
-                  gene_id %in% g_gd_list$V1)
+  dplyr::filter(gene_id %in% g_gd_list$V1 & average_conservation > 0.25)
 
 fimo_dedup <- lapply(names(tf_list), function(x){
+  print(x)
   fimo_new <- fimo_short[grepl(tf_list[[x]], fimo_short$motif_alt_id),  ]
-  fimo_new$unique_id <- paste0(fimo_new$gene_id, "_",
-                               fimo_new$motif_start, "_",
-                               fimo_new$motif_end)
-  fimo_new <- fimo_new %>%
-    dplyr::distinct(unique_id, .keep_all = TRUE) %>%
-    data.frame
+  if(nrow(fimo_new) > 0){
+    fimo_new$unique_id <- paste0(fimo_new$gene_id, "_",
+                                 fimo_new$motif_start, "_",
+                                 fimo_new$motif_end)
+
   
-  fimo_new$unique_id <- NULL
-  fimo_new$motif_group <- x
+    fimo_new <- fimo_new %>%
+      dplyr::distinct(unique_id, .keep_all = TRUE) %>%
+      data.frame
+    fimo_new$unique_id <- NULL
+    fimo_new$motif_group <- x
+  }
   return(fimo_new)
 })
 
@@ -81,11 +90,9 @@ fimo_dedup <- do.call(rbind, fimo_dedup)
 
 fimo_dedup <- fimo_dedup[order(fimo_dedup$p.value), ]
 
-fimo_dedup <- fimo_dedup %>%
-  dplyr::filter(abs(motif_pos) < 300)
 
-write.csv(fimo_short, file.path(working_dir, gene_list, meme_dir,
-                                fimo_path, "fimo_filtered.csv"))
+write.csv(fimo_dedup, file.path(working_dir, gene_list, meme_dir,
+                                fimo_path, "fimo_filtered_conservation.csv"))
 
 make_plots <- function(tf_pattern, tf_name, plot_list, fimo_output,
                        score = c(10, 15)){
