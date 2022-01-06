@@ -9,3 +9,4 @@ give_results/*
 figures/*
 files/*.bed
 files/*.pdf
+src/rules/not_used/*
